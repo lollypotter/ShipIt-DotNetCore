@@ -53,8 +53,9 @@ namespace ShipIt.Controllers
                 else
                 {
                     var product = products[orderLine.gtin];
-                    lineItems.Add(new StockAlteration(product.Id, orderLine.quantity));
+                    lineItems.Add(new StockAlteration(product.Id, orderLine.quantity, product.Weight));
                     productIds.Add(product.Id);
+                    Console.WriteLine("Number of trucks = " + lineItems.Sum(lineItem => lineItem.ProductWeight)/2000);
                 }
             }
 

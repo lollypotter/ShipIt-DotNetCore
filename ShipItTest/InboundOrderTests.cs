@@ -31,6 +31,7 @@ namespace ShipItTest
 
         private Product product;
         private int productId;
+        private double weight;
         private const string GTIN = "0000";
 
         public new void onSetUp()
@@ -42,6 +43,7 @@ namespace ShipItTest
             productRepository.AddProducts(new List<ProductDataModel>() { productDataModel });
             product = new Product(productRepository.GetProductByGtin(GTIN));
             productId = product.Id;
+            weight = product.Weight;
         }
 
         [Test]
@@ -60,7 +62,7 @@ namespace ShipItTest
         public void TestCreateOrderProductHoldingNoStock()
         {
             onSetUp();
-            stockRepository.AddStock(WAREHOUSE_ID, new List<StockAlteration>() { new StockAlteration(productId, 0) });
+            stockRepository.AddStock(WAREHOUSE_ID, new List<StockAlteration>() { new StockAlteration(productId, 0, weight) });
 
             var inboundOrder = inboundOrderController.Get(WAREHOUSE_ID);
 
@@ -73,7 +75,7 @@ namespace ShipItTest
         public void TestCreateOrderProductHoldingSufficientStock()
         {
             onSetUp();
-            stockRepository.AddStock(WAREHOUSE_ID, new List<StockAlteration>() { new StockAlteration(productId, product.LowerThreshold) });
+            stockRepository.AddStock(WAREHOUSE_ID, new List<StockAlteration>() { new StockAlteration(productId, product.LowerThreshold, weight) });
 
             var inboundOrder = inboundOrderController.Get(WAREHOUSE_ID);
 
@@ -84,7 +86,7 @@ namespace ShipItTest
         public void TestCreateOrderDiscontinuedProduct()
         {
             onSetUp();
-            stockRepository.AddStock(WAREHOUSE_ID, new List<StockAlteration>() { new StockAlteration(productId, product.LowerThreshold - 1) });
+            stockRepository.AddStock(WAREHOUSE_ID, new List<StockAlteration>() { new StockAlteration(productId, product.LowerThreshold - 1, weight) });
             productRepository.DiscontinueProductByGtin(GTIN);
 
             var inboundOrder = inboundOrderController.Get(WAREHOUSE_ID);
