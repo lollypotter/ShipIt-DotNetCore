@@ -5,6 +5,7 @@ using System.Linq;
 using Npgsql;
 using ShipIt.Exceptions;
 using ShipIt.Models.DataModels;
+using ShipIt.Models.ApiModels;
 
 namespace ShipIt.Repositories
 {
@@ -13,6 +14,7 @@ namespace ShipIt.Repositories
         int GetCount();
         ProductDataModel GetProductByGtin(string gtin);
         IEnumerable<ProductDataModel> GetProductsByGtin(List<string> gtins);
+        IEnumerable<ProductDataModel> GetProductsByIds(List<int> Ids);
         ProductDataModel GetProductById(int id);
         void AddProducts(IEnumerable<ProductDataModel> products);
         void DiscontinueProductByGtin(string gtin);
@@ -41,6 +43,14 @@ namespace ShipIt.Repositories
             string sql = String.Format("SELECT p_id, gtin_cd, gcp_cd, gtin_nm, m_g, l_th, ds, min_qt FROM gtin WHERE gtin_cd IN ('{0}')", 
                 String.Join("','", gtins));
             return base.RunGetQuery(sql, reader => new ProductDataModel(reader), "No products found with given gtin ids", null);
+        }
+
+        public IEnumerable<ProductDataModel> GetProductsByIds(List<int> Ids)
+        {
+
+            string sql = String.Format("SELECT p_id, gtin_cd, gcp_cd, gtin_nm, m_g, l_th, ds, min_qt FROM gtin WHERE p_id IN ('{0}')", 
+                String.Join("','", Ids));
+            return base.RunGetQuery(sql, reader => new ProductDataModel(reader), "No products found with given p_id", null);
         }
 
         public ProductDataModel GetProductById(int id)
