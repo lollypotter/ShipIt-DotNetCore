@@ -53,9 +53,11 @@ namespace ShipIt.Controllers
                 else
                 {
                     var product = products[orderLine.gtin];
-                    lineItems.Add(new StockAlteration(product.Id, orderLine.quantity, product.Weight));
+                    lineItems.Add(new StockAlteration(product.Id, orderLine.quantity));
                     productIds.Add(product.Id);
-                    Console.WriteLine("Number of trucks = " + lineItems.Sum(lineItem => lineItem.ProductWeight)/2000);
+                    //Console.WriteLine("ID = " +product.Id +" Quantity= " + orderLine.quantity + " Weight = "+ product.Weight);
+
+                    //Console.WriteLine("Number of trucks = " + lineItems.Sum(lineItem => lineItem.ProductWeight)/20000000+"\n");
                 }
             }
 
@@ -93,8 +95,16 @@ namespace ShipIt.Controllers
             {
                 throw new InsufficientStockException(string.Join("; ", errors));
             }
+            
+            var numberofTrucks = GetNumberofTrucks(lineItems);
+            Console.WriteLine("Number of Trucks = " + numberofTrucks);
 
             _stockRepository.RemoveStock(request.WarehouseId, lineItems);
+        }
+
+        private double GetNumberofTrucks(List<StockAlteration> lineItems)
+        {
+            return (lineItems.Sum(lineitem => (_productRepository.GetProductById(lineitem.ProductId).Weight * lineitem.Quantity))/2000);
         }
     }
 }
