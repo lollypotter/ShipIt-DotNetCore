@@ -18,6 +18,8 @@ namespace ShipItTest
         private const string NAME = "Gissell Sadeem";
         private const int WAREHOUSE_ID = 1;
 
+        private const int EMP_ID = 1;
+
         [Test]
         public void TestRoundtripEmployeeRepository()
         {
@@ -35,7 +37,7 @@ namespace ShipItTest
             onSetUp();
             var employeeBuilder = new EmployeeBuilder().setName(NAME);
             employeeRepository.AddEmployees(new List<Employee>() {employeeBuilder.CreateEmployee()});
-            var result = employeeController.Get(NAME);
+            var result = employeeController.Get(EMP_ID);
 
             var correctEmployee = employeeBuilder.CreateEmployee();
             Assert.IsTrue(EmployeesAreEqual(correctEmployee, result.Employees.First()));
@@ -65,7 +67,7 @@ namespace ShipItTest
             onSetUp();
             try
             {
-                employeeController.Get(NAME);
+                employeeController.Get(EMP_ID);
                 Assert.Fail("Expected exception to be thrown.");
             }
             catch (NoSuchEntityException e)
@@ -116,7 +118,7 @@ namespace ShipItTest
 
             try
             {
-                employeeController.Get(NAME);
+                employeeController.Get(EMP_ID);
                 Assert.Fail("Expected exception to be thrown.");
             }
             catch (NoSuchEntityException e)

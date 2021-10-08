@@ -5,6 +5,7 @@ using System.Linq;
  using ShipIt.Exceptions;
 using ShipIt.Models.ApiModels;
 using ShipIt.Repositories;
+using System.Text;
 
 namespace ShipIt.Controllers
 {
@@ -23,7 +24,7 @@ namespace ShipIt.Controllers
         }
 
         [HttpPost("")]
-        public void Post([FromBody] OutboundOrderRequestModel request)
+        public OutboundOrderResponse Post([FromBody] OutboundOrderRequestModel request)
         {
             Log.Info(String.Format("Processing outbound order: {0}", request));
 
@@ -96,15 +97,68 @@ namespace ShipIt.Controllers
                 throw new InsufficientStockException(string.Join("; ", errors));
             }
             
-            var numberofTrucks = GetNumberofTrucks(lineItems);
-            Console.WriteLine("Number of Trucks = " + numberofTrucks);
+            
+            //Console.WriteLine("Number of Trucks = " + numberofTrucks);
 
             _stockRepository.RemoveStock(request.WarehouseId, lineItems);
+            return GetNumberofTrucks(lineItems, request.WarehouseId);
         }
 
-        private double GetNumberofTrucks(List<StockAlteration> lineItems)
+        private OutboundOrderResponse GetNumberofTrucks(List<StockAlteration> lineItems, int warehouseId)
         {
-            return (lineItems.Sum(lineitem => (_productRepository.GetProductById(lineitem.ProductId).Weight * lineitem.Quantity))/2000);
+            var trucks = new List<Truck>();
+            var truckTotalweight = 0.0;
+           // var productTotalweight = 0.0;
+            var products = new Dictionary<Product, int>();
+            var truckid = 0;
+            foreach(var lineItem in lineItems)
+            {
+                var product = _productRepository.GetProductById(lineItem.ProductId);
+
+                //productTotalweight += product.Weight * lineItem.Quantity;//500*3,500*3,1000*1,100*3
+
+                while(lineItem.Quantity > 0)
+                {
+                    if (truckTotalweight < 2000.0 && (product.Weight * lineItem.Quantity) + truckTotalweight <= 2000.0)
+                    {
+                        products.Add(new Product(product), lineItem.Quantity); 
+                        truckTotalweight += product.Weight * lineItem.Quantity;//1500,1500,//2000
+                        lineItem.Quantity = 0;
+                    }
+                    else
+                    {
+                        var minQuantityAddedToTruck = Convert.ToInt32(Math.Floor((2000 - truckTotalweight)/product.Weight));//2000 -1500/500
+
+                        if(minQuantityAddedToTruck > 0)
+                        {
+                            products.Add(new Product(product), minQuantityAddedToTruck);
+
+                            truckTotalweight += minQuantityAddedToTruck * product.Weight;
+                            lineItem.Quantity = lineItem.Quantity - minQuantityAddedToTruck;
+                        }
+                        trucks.Add(new Truck(truckid = truckid + 1, products, truckTotalweight));
+                        truckTotalweight = 0;
+                        products.Clear();
+                    }      
+                } 
+            }
+
+            if (products.Count() > 0 && truckTotalweight <= 2000)
+                trucks.Add(new Truck(truckid = truckid + 1, products, truckTotalweight));
+
+
+            Console.WriteLine(trucks.Count());
+            foreach(var truck in trucks)
+            {
+                Console.WriteLine("Truck Id = {0} TotalWeight = {1}", truck.TruckId, truck.TotalWeight);
+                foreach(var product in truck.Products)
+                    Console.WriteLine("Product Id = {0} Weight = {1} Quantity = {2}", product.Key.Id, product.Key.Weight, product.Value);
+            }
+            return new OutboundOrderResponse()
+            {
+                WarehouseId = warehouseId,
+                Trucks = trucks
+            };
         }
     }
 }

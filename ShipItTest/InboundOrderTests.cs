@@ -17,7 +17,8 @@ namespace ShipItTest
             new EmployeeRepository(),
             new CompanyRepository(),
             new ProductRepository(),
-            new StockRepository()
+            new StockRepository(),
+            new WarehouseStockRepository()
         );
         StockRepository stockRepository = new StockRepository();
         CompanyRepository companyRepository = new CompanyRepository();

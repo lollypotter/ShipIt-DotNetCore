@@ -6,6 +6,7 @@ using ShipIt.Models.ApiModels;
 using ShipIt.Models.DataModels;
 using ShipIt.Repositories;
 using ShipItTest.Builders;
+using System;
 
 namespace ShipItTest
 {
@@ -52,12 +53,19 @@ namespace ShipItTest
                     new OrderLine()
                     {
                         gtin = GTIN,
-                        quantity = 3
+                        quantity = 10
                     }
                 }
             };
 
-            outboundOrderController.Post(outboundOrder);
+            var response = outboundOrderController.Post(outboundOrder);
+            /*Console.WriteLine(response.WarehouseId);
+            foreach(var truck in response.Trucks)
+            {
+                Console.WriteLine("Truck Id = {0} TotalWeight = {1}", truck.TruckId, truck.TotalWeight);
+                foreach(var product in truck.Products)
+                    Console.WriteLine("Product Id = {0} Weight = {1}", product.Id, product.Weight);
+            }*/
 
             var stock = stockRepository.GetStockByWarehouseAndProductIds(WAREHOUSE_ID, new List<int>() { productId })[productId];
             Assert.AreEqual(stock.held, 7);
