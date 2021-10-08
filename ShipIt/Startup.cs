@@ -26,6 +26,7 @@ namespace ShipIt_DotNetCore
             services.AddTransient<IEmployeeRepository, EmployeeRepository>();
             services.AddTransient<IProductRepository, ProductRepository>();
             services.AddTransient<IStockRepository, StockRepository>();
+            services.AddTransient<IWarehouseStockRepository, WarehouseStockRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -15,6 +15,7 @@ namespace ShipIt.Repositories
         CompanyDataModel GetCompany(string gcp);
         IEnumerable<CompanyDataModel> GetCompaniesByGcps(List<string> gcps);
         void AddCompanies(IEnumerable<Company> companies);
+        IEnumerable<Company> GetCompanyFromProduct(IEnumerable<WarehouseStockDataModel> stockProducts);
     }
 
     public class CompanyRepository : RepositoryBase, ICompanyRepository
@@ -57,6 +58,15 @@ namespace ShipIt.Repositories
             }
 
             base.RunTransaction(sql, parametersList);
+        }
+
+        public IEnumerable<Company> GetCompanyFromProduct(IEnumerable<WarehouseStockDataModel> stockProducts)
+        {
+            var companyGcps = stockProducts.Select(product => product.Gcp).Distinct().ToList();
+
+            var companiesDataModel = GetCompaniesByGcps(companyGcps);
+
+            return (companiesDataModel.Select(CompanyDataModel => new Company(CompanyDataModel)).ToList());
         }
     }
 

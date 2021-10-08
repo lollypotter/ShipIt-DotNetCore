@@ -18,13 +18,15 @@ namespace ShipIt.Controllers
         private readonly ICompanyRepository _companyRepository;
         private readonly IProductRepository _productRepository;
         private readonly IStockRepository _stockRepository;
+        private readonly IWarehouseStockRepository _warehouseStockRepository;
 
-        public InboundOrderController(IEmployeeRepository employeeRepository, ICompanyRepository companyRepository, IProductRepository productRepository, IStockRepository stockRepository)
+        public InboundOrderController(IEmployeeRepository employeeRepository, ICompanyRepository companyRepository, IProductRepository productRepository, IStockRepository stockRepository, IWarehouseStockRepository warehouseStockRepository)
         {
             _employeeRepository = employeeRepository;
             _stockRepository = stockRepository;
             _companyRepository = companyRepository;
             _productRepository = productRepository;
+            _warehouseStockRepository = warehouseStockRepository;
         }
 
         [HttpGet("{warehouseId}")]
@@ -36,30 +38,37 @@ namespace ShipIt.Controllers
 
             Log.Debug(String.Format("Found operations manager: {0}", operationsManager));
 
-            var allStock = _stockRepository.GetStockByWarehouseId(warehouseId);
+            //var companyGcps = allStockProducts.Select(product => product.Gcp).Distinct().ToList();
+
+            /*var allStock = _stockRepository.GetStockByWarehouseId(warehouseId);
 
             var allproductIds = allStock.Select(stock => stock.ProductId).ToList();
             
             var products = _productRepository.GetProductsByIds(allproductIds);
 
-            var companyGcps = products.Select(product => product.Gcp).Distinct().ToList();
+            var companyGcps = products.Select(product => product.Gcp).Distinct().ToList();*/
 
-            var companiesDataModel =_companyRepository.GetCompaniesByGcps(companyGcps);
+            //var companiesDataModel =_companyRepository.GetCompaniesByGcps(companyGcps);
 
-            var companies = companiesDataModel.Select(CompanyDataModel => new Company(CompanyDataModel)).ToList();
+            //var companies = companiesDataModel.Select(CompanyDataModel => new Company(CompanyDataModel)).ToList();
+            
+            var allStockProducts = _warehouseStockRepository.GetStockProductsByWarehouseId(warehouseId);
+
+            var companies = _companyRepository.GetCompanyFromProduct(allStockProducts);
 
             Dictionary<Company, List<InboundOrderLine>> orderlinesByCompany = new Dictionary<Company, List<InboundOrderLine>>();
-            foreach (var product in products)
+            
+            foreach (var product in allStockProducts)
             {
                 //Product product = new Product(_productRepository.GetProductById(stock.ProductId));
-                var stock = allStock.Single(stock => stock.ProductId == product.Id);
+                //var stock = allStock.Single(stock => stock.ProductId == product.Id);
 
-                if(stock.held < product.LowerThreshold && product.Discontinued != 1)
-                {
+                //if(stock.held < product.LowerThreshold /*&& product.Discontinued != 1*/)
+                //{
                     var company = companies.Single(company => company.Gcp == product.Gcp);
                     //Company company = new Company(_companyRepository.GetCompany(product.Gcp));
 
-                    var orderQuantity = Math.Max(product.LowerThreshold * 3 - stock.held, product.MinimumOrderQuantity);
+                    var orderQuantity = Math.Max(product.LowerThreshold * 3 - product.Held, product.MinimumOrderQuantity);
 
                     if (!orderlinesByCompany.ContainsKey(company))
                     {
@@ -73,7 +82,7 @@ namespace ShipIt.Controllers
                             name = product.Name,
                             quantity = orderQuantity
                         });
-                }
+                //}
             }
 
             Log.Debug(String.Format("Constructed order lines: {0}", orderlinesByCompany));
